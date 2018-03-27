@@ -74,7 +74,9 @@
     }
  */
 
- 
+
+//#define USE_CAYENNELPP   // enable it if you want to send the data to Cayenne
+
 /*
 *****************************************************************************************
 * INCLUDE FILES
@@ -88,6 +90,9 @@
 #include  "adcvcc.h"  
 #include  "BME280I2C.h"
 
+#ifdef USE_CAYENNELPP
+#include <CayenneLPP.h>
+#endif
 /*
  * Defines
  */ 
@@ -125,6 +130,9 @@
 #define LMIC_DIO1   7
 #define LMIC_DIO2   8
 
+#ifdef USE_CAYENNELPP
+CayenneLPP lpp(51);
+#endif
 
 const lmic_pinmap lmic_pins = {
     .nss = LMIC_NSS,
@@ -293,6 +301,7 @@ void do_send(osjob_t* j)
         debugPrint(F("BV="));
         debugPrintLn(batvalue);  
 #endif
+#ifndef USE_CAYENNELPP
         int t = (int)((temp + 40.0) * 10.0); 
         // t = t + 40; => t [-40..+85] => [0..125] => t = t * 10; => t [0..125] => [0..1250]
         int p = (int)(pressure);  // p [300..1100]
@@ -305,8 +314,15 @@ void do_send(osjob_t* j)
         mydata[3] = t & 0xFF;
         mydata[4] = p >> 8;
         mydata[5] = p & 0xFF; 
-        
         LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
+#else
+        lpp.reset();
+        lpp.addTemperature(1, temp);
+        lpp.addBarometricPressure(2, pressure);
+        lpp.addRelativeHumidity(3, humidity);
+        lpp.addAnalogInput(4,batt); 
+        LMIC_setTxData2(1, lpp.getBuffer(), lpp.getSize(),0);
+#endif        
         debugPrintLn(F("PQ")); //Packet queued
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -390,7 +406,7 @@ void setup()
         debugFlush();
         LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_ON);  
     }
-  
+ 
     // LMIC init
     os_init();
     // Reset the MAC state. Session and pending data transfers will be discarded.

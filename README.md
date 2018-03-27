@@ -18,6 +18,7 @@ Software and libraries used :
    To use a brownout detection of 1.8V.
  - special adcvcc library from Charles (see : https://www.thethingsnetwork.org/forum/t/full-arduino-mini-lorawan-and-1-3ua-sleep-mode/8059/32?u=lex_ph2lb )
  - BME280 library https://github.com/finitespace/BME280
+ - (optional) CayenneLPP library https://github.com/sabas1080/CayenneLPP
  
 For licenses of the used libraries, check the links above.
  
